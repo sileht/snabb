@@ -750,14 +750,9 @@ void lj_record_tailcall(jit_State *J, BCReg func, ptrdiff_t nargs)
     J->base[func+1] = TREF_FRAME;
   memmove(&J->base[-1-LJ_FR2], &J->base[func], sizeof(TRef)*(J->maxslot+1+LJ_FR2));
   /* Note: the new TREF_FRAME is now at J->base[-1] (even for slot #0). */
-
-  J->tailcalled++;
-
-  /* Although it's true that tail calls can form a loop, the Lua programming
-  ** idiom does not encourage this.  Instead of counting tail calls towards the
-  ** unroll limit and potentially causing important traces without loops to
-  ** abort, eventually blacklist, and fall back to the interpreter, just rely on
-  ** JIT_P_maxrecord to catch runaway tail-call loops. */
+  /* Tailcalls can form a loop, so count towards the loop unroll limit. */
+  if (++J->tailcalled > J->loopunroll)
+    lj_trace_err(J, LJ_TRERR_LUNROLL);
 }
 
 /* Check unroll limits for down-recursion. */
@@ -2411,6 +2406,8 @@ void lj_record_ins(jit_State *J)
   case BC_IFORL:
   case BC_IITERL:
   case BC_ILOOP:
+  case BC_IFUNCF:
+  case BC_IFUNCV:
     lj_trace_err(J, LJ_TRERR_BLACKL);
     break;
 
@@ -2422,7 +2419,6 @@ void lj_record_ins(jit_State *J)
   /* -- Function headers -------------------------------------------------- */
 
   case BC_FUNCF:
-  case BC_IFUNCF:
     rec_func_lua(J);
     break;
   case BC_JFUNCF:
@@ -2430,7 +2426,6 @@ void lj_record_ins(jit_State *J)
     break;
 
   case BC_FUNCV:
-  case BC_IFUNCV:
     rec_func_vararg(J);
     rec_func_lua(J);
     break;

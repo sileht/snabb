@@ -21,3 +21,8 @@ __pycache__
 .images
 /lib/luajit/usr
 /src/program/programs.inc
+/lib/luajit/src/lj_bcdef.h
+/lib/luajit/src/lj_ffdef.h
+/lib/luajit/src/lj_folddef.h
+/lib/luajit/src/lj_libdef.h
+/lib/luajit/src/lj_recdef.h
