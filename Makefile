@@ -4,7 +4,7 @@ CSRC   = $(wildcard src/c/*.c)
 COBJ   = $(CSRC:.c=.o)
 PREFIX = /usr/local
 
-LUAJIT_CFLAGS := -include $(CURDIR)/gcc-preinclude.h
+LUAJIT_CFLAGS := -include $(CURDIR)/gcc-preinclude.h -lpthread
 
 all: $(LUAJIT) $(SYSCALL) $(PFLUA)
 #       LuaJIT
@@ -13,6 +13,15 @@ all: $(LUAJIT) $(SYSCALL) $(PFLUA)
 	         CFLAGS="$(LUAJIT_CFLAGS)" && \
 	 $(MAKE) DESTDIR=`pwd` install)
 	(cd lib/luajit/usr/local/bin; ln -fs luajit-2.1.0-beta3 luajit)
+#       effil
+	@(if [ ! -d lib/effil/build ]; then \
+		mkdir -p lib/effil/build && \
+		cd lib/effil/build && \
+		cmake -D LUA_INCLUDE_DIR=$(CURDIR)/lib/luajit/usr/local/include/luajit-2.1 .. ; \
+	fi)
+	@(cd lib/effil/build && $(MAKE))
+	@cp -p lib/effil/build/libeffil.so $(CURDIR)/lib/luajit/usr/local/lib/lua/5.1
+	@cp -p lib/effil/src/lua/effil.lua src/
 #       ljsyscall
 	@mkdir -p src/syscall/linux
 	@cp -p lib/ljsyscall/syscall.lua   src/
@@ -31,7 +40,8 @@ install: all
 
 clean:
 	(cd lib/luajit && $(MAKE) clean)
-	(cd src; $(MAKE) clean; rm -rf syscall.lua syscall)
+	(rm -rf lib/effil/build)
+	(cd src; $(MAKE) clean; rm -rf syscall.lua syscall effil.lua libeffil.so)
 
 PACKAGE:=snabbswitch
 DIST_BINARY:=snabb
