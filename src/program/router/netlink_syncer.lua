@@ -249,10 +249,10 @@ function NetlinkSyncer:sync()
         -- -- self:debug(obj.op .. ": " .. tostring(obj))
         if obj.nl == c.RTM.NEWLINK then
             self.ifs_indexmap[obj.index] = #self.ifs
-            table.insert(self.ifs, obj)
+            self.ifs[#self.ifs] = obj
         elseif obj.nl == c.RTM.DELLINK then
-            table.remove(self.ifs, self.ifs_indexmap[obj.index])
-            table.remove(self.ifs_indexmap, obj.index)
+            self.ifs[self.ifs_indexmap[obj.index]] = nil
+            self.ifs_indexmap[obj.index] = nil
         elseif obj.nl == c.RTM.GETLINK then
             self.ifs[self.ifs_indexmap[obj.index]] = obj
         elseif obj.nl == c.RTM.NEWNEIGH or obj.nl == c.RTM.DELNEIGH or obj.nl == c.RTM.GETNEIGH then
